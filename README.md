@@ -1,5 +1,6 @@
 # Task Manager API — D25IT118
 
+<<<<<<< HEAD
 A RESTful backend for a Task Management system, built with Node.js and Express.
 Uses an in-memory array as storage (no database).
 
@@ -87,3 +88,32 @@ curl.exe -X DELETE http://localhost:5000/tasks/<id>
 
 The Richardson Maturity Model evaluation for this API lives in the
 separate `assignment-w4-D25IT118` repository (see `MATURITY.md` there).
+=======
+A RESTful backend built with Node.js and Express for managing tasks (in-memory storage).
+
+## Run locally
+
+npm install
+
+npm start
+
+
+Server runs on `http://localhost:5000`
+
+## Endpoints
+| Method | Route         | Description         |
+|--------|---------------|----------------------|
+| GET    | /tasks        | Get all tasks        |
+| GET    | /tasks/:id    | Get a single task    |
+| POST   | /tasks        | Create a new task    |
+| PUT    | /tasks/:id    | Update a task        |
+| DELETE | /tasks/:id    | Delete a task        |
+
+## Middleware pipeline
+1. `express.json()` — parses JSON body
+2. Content-Type check — rejects POST/PUT without `application/json`
+3. Request logger — logs method, URL, timestamp
+4. Route-specific `validateIdParam` — checks `:id` format before hitting controller
+5. 404 handler — for undefined routes
+6. Global error handler — last middleware, catches thrown/passed errors     
+>>>>>>> f9cd19dd003723419293f7ca5191965b8531acef
