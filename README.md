@@ -3,10 +3,11 @@
 A RESTful backend built with Node.js and Express for managing tasks (in-memory storage).
 
 ## Run locally
-\`\`\`bash
+
 npm install
+
 npm start
-\`\`\`
+
 
 Server runs on `http://localhost:5000`
 
