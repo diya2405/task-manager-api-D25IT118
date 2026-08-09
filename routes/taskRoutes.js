@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const validateTaskId = require('../middleware/validateTaskId');
+
 const {
   getAllTasks,
   getTaskById,
@@ -8,6 +8,8 @@ const {
   updateTask,
   deleteTask,
 } = require('../controllers/taskController');
+
+const validateTaskId = require('../middleware/validateTaskId');
 
 router.get('/', getAllTasks);
 router.get('/:id', validateTaskId, getTaskById);

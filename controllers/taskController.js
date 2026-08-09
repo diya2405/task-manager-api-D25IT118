@@ -1,53 +1,55 @@
-const taskStore = require('../data/taskStore');
+const Task = require('../models/Task');
 
-function getAllTasks(req, res) {
-  res.status(200).json(taskStore.getAll());
-}
-
-function getTaskById(req, res) {
-  const task = taskStore.getById(req.params.id);
-  if (!task) {
-    return res.status(404).json({ error: "Task not found" });
-  }
-  res.status(200).json(task);
-}
-
-function createTask(req, res, next) {
+exports.getAllTasks = async (req, res, next) => {
   try {
-    const { title, completed } = req.body;
-    if (!title || typeof title !== 'string') {
-      return res.status(400).json({ error: "Task 'title' is required and must be a string" });
-    }
-    const newTask = taskStore.create(title, completed);
-    res.status(201).json(newTask);
+    const tasks = await Task.find();
+    res.status(200).json(tasks);
   } catch (err) {
     next(err);
   }
-}
+};
 
-
-
-
-function updateTask(req, res, next) {
+exports.getTaskById = async (req, res, next) => {
   try {
-    const existing = taskStore.getById(req.params.id);
-    if (!existing) {
-      return res.status(404).json({ error: "Task not found" });
-    }
-    const updated = taskStore.update(req.params.id, req.body);
-    res.status(200).json(updated);
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    res.status(200).json(task);
+  } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Task not found' });
+    next(err);
+  }
+};
+
+exports.createTask = async (req, res, next) => {
+  try {
+    const task = await Task.create(req.body);
+    res.status(201).json(task);
   } catch (err) {
     next(err);
   }
-}
+};
 
-function deleteTask(req, res) {
-  const existing = taskStore.getById(req.params.id);
-  if (!existing) {
-    return res.status(404).json({ error: "Task not found" });
+exports.updateTask = async (req, res, next) => {
+  try {
+    const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    res.status(200).json(task);
+  } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Task not found' });
+    next(err);
   }
-  const deleted = taskStore.remove(req.params.id);
-  res.status(200).json({ message: "Task deleted", task: deleted });
-}
+};
 
-module.exports = { getAllTasks, getTaskById, createTask, updateTask, deleteTask };
+exports.deleteTask = async (req, res, next) => {
+  try {
+    const task = await Task.findByIdAndDelete(req.params.id);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    res.status(200).json({ message: 'Task deleted', task });
+  } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: 'Task not found' });
+    next(err);
+  }
+};

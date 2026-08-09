@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Task by ID
+method: GET
+url: 'http://localhost:5000/tasks/:id'
+order: 5000
+pathVariables:
+  - key: id
+    value: ''

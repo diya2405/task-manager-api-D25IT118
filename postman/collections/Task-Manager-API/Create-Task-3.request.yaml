@@ -1,0 +1,16 @@
+$kind: http-request
+name: Create Task 3
+method: POST
+url: 'http://localhost:5000/tasks'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Go for a walk",
+      "description": "30 minute walk in the park",
+      "completed": false
+    }
