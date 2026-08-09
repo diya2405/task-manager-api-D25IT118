@@ -1,8 +1,0 @@
-$kind: http-request
-name: Delete Task
-method: DELETE
-url: 'http://localhost:5000/tasks/:id'
-order: 7000
-pathVariables:
-  - key: id
-    value: ''
