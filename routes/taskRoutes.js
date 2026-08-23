@@ -9,12 +9,14 @@ const {
   deleteTask,
 } = require('../controllers/taskController');
 
+const auth = require('../middleware/auth');
 const validateTaskId = require('../middleware/validateTaskId');
+const validateTaskInput = require('../middleware/validateTaskInput');
 
-router.get('/', getAllTasks);
-router.get('/:id', validateTaskId, getTaskById);
-router.post('/', createTask);
-router.put('/:id', validateTaskId, updateTask);
-router.delete('/:id', validateTaskId, deleteTask);
+router.get('/', auth, getAllTasks);
+router.get('/:id', auth, validateTaskId, getTaskById);
+router.post('/', auth, validateTaskInput, createTask);
+router.put('/:id', auth, validateTaskId, validateTaskInput, updateTask);
+router.delete('/:id', auth, validateTaskId, deleteTask);
 
 module.exports = router;

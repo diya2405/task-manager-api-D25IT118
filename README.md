@@ -12,6 +12,8 @@ A RESTful backend for a Task Management system, built with **Node.js, Express, a
 - MongoDB + Mongoose
 - CORS (for frontend integration)
 - dotenv
+- bcryptjs (password hashing)
+- jsonwebtoken (JWT auth)
 
 ## Setup
 
@@ -26,6 +28,8 @@ Create a `.env` file in the project root:
 MONGO_URI=mongodb://127.0.0.1:27017/taskmanager
 PORT=5000
 CLIENT_ORIGIN=http://localhost:5173
+JWT_SECRET=your_secret_key_here
+JWT_EXPIRES_IN=1h
 ```
 (Swap `MONGO_URI` for an Atlas connection string if you prefer cloud MongoDB instead of a local Compass connection — no other code changes needed.)
 
@@ -75,15 +79,20 @@ task-manager-api-D25IT118/
 ├── package.json
 ├── .env.example
 ├── models/
-│   └── Task.js
+│   ├── Task.js
+│   └── User.js
 ├── controllers/
-│   └── taskController.js
+│   ├── taskController.js
+│   └── authController.js
 ├── routes/
-│   └── taskRoutes.js
+│   ├── taskRoutes.js
+│   └── authRoutes.js
 └── middleware/
+    ├── auth.js
     ├── logger.js
     ├── requireJson.js
     ├── validateTaskId.js
+    ├── validateTaskInput.js
     ├── notFound.js
     └── errorHandler.js
 ```
@@ -131,6 +140,54 @@ curl -X DELETE http://localhost:5000/tasks/<id>
 - No other backend changes needed — Practical 5's CRUD logic is reused as-is
 - `.env` excluded via `.gitignore`; `.env.example` provided with placeholder values
 - Verified end-to-end: create/update/delete requests from the React UI persist correctly in MongoDB, confirmed by refreshing the browser
+
+### Practical 7 — Authentication and Middleware Pipeline
+- Added user registration and login with bcrypt-hashed passwords and JWT-based authentication
+- New `User` model (`email`, hashed `password`, timestamps) with unique email constraint
+- Three auth endpoints: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
+- JWT auth middleware protects **all** `/tasks*` routes — requests without a valid token are rejected `401`
+- Server-side `validateTaskInput` middleware rejects missing/empty task titles on `POST`/`PUT` before Mongoose is touched
+- Security: same generic "Invalid credentials" for wrong email or wrong password (prevents user enumeration), password hash never in any response, `JWT_SECRET` only in `.env`
+- Token stored in `localStorage` on the frontend (acceptable for coursework scope; httpOnly cookie would be the production-grade approach)
+
+## Auth Endpoints
+
+| Method | Route           | Auth Required | Description                    | Success | Error       |
+|--------|-----------------|---------------|--------------------------------|---------|-------------|
+| POST   | /auth/register  | No            | Create a new user account      | 201     | 400         |
+| POST   | /auth/login     | No            | Log in, receive a JWT          | 200     | 400 / 401   |
+| GET    | /auth/me        | Yes (Bearer)  | Get current user info          | 200     | 401 / 404   |
+
+> **Note:** All `/tasks*` endpoints now require `Authorization: Bearer <token>` in the request header. Without it, the API responds `401`.
+
+## Auth Example Requests (curl)
+
+```bash
+# Register a new user
+curl -X POST http://localhost:5000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "diya@example.com", "password": "test123"}'
+
+# Login
+curl -X POST http://localhost:5000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "diya@example.com", "password": "test123"}'
+
+# Get current user (replace <token> with the JWT from login)
+curl http://localhost:5000/auth/me \
+  -H "Authorization: Bearer <token>"
+
+# Get all tasks (now requires auth)
+curl http://localhost:5000/tasks \
+  -H "Authorization: Bearer <token>"
+
+# Create a task (now requires auth)
+curl -X POST http://localhost:5000/tasks \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"title": "Write notes"}'
+```
+
 
 ## GitHub Deliverables
 
