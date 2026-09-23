@@ -14,6 +14,7 @@ A RESTful backend for a Task Management system, built with **Node.js, Express, a
 - dotenv
 - bcryptjs (password hashing)
 - jsonwebtoken (JWT auth)
+- node-cache (in-memory caching & telemetry)
 
 ## Setup
 
@@ -87,14 +88,16 @@ task-manager-api-D25IT118/
 ├── routes/
 │   ├── taskRoutes.js
 │   └── authRoutes.js
-└── middleware/
-    ├── auth.js
-    ├── logger.js
-    ├── requireJson.js
-    ├── validateTaskId.js
-    ├── validateTaskInput.js
-    ├── notFound.js
-    └── errorHandler.js
+├── middleware/
+│   ├── auth.js
+│   ├── logger.js
+│   ├── requireJson.js
+│   ├── validateTaskId.js
+│   ├── validateTaskInput.js
+│   ├── notFound.js
+│   └── errorHandler.js
+└── utils/
+    └── cache.js
 ```
 
 ## Key Questions (Analysis)
@@ -189,11 +192,46 @@ curl -X POST http://localhost:5000/tasks \
 ```
 
 
+### Practical 9 — In-Memory Caching and Query Optimization
+- Implemented in-memory server-side caching using `node-cache` with a 60-second TTL
+- **User-Scoped Caching Strategy**: Cache keys are segmented per authenticated user (`tasks_${req.user.id}` and `task_${req.user.id}_${taskId}`) to maintain strict multi-tenant data privacy
+- **Cache Invalidation on Writes**: Every write operation (`POST /tasks`, `PUT /tasks/:id`, `DELETE /tasks/:id`) immediately purges the corresponding cache keys, ensuring stale task data is never served
+- **Cache Telemetry**: `X-Cache: HIT` and `X-Cache: MISS` headers returned on read operations, with hit/miss counter stats exposed at `GET /tasks/cache/stats`
+- **Benchmarking & Testing**: Includes helper endpoints for manual cache flush (`POST /tasks/cache/flush`) and batch dummy task generation (`POST /tasks/seed-dummy`)
+
+#### Empirical Performance Comparison (Cached vs. Uncached)
+
+| Metric / Reading | Uncached (MongoDB Atlas Query) | Cached (node-cache In-Memory) | Latency Reduction |
+|---|---|---|---|
+| **Sample 1** | `42.43 ms` | `3.89 ms` | **90.8% faster** |
+| **Sample 2** | `35.17 ms` | `3.90 ms` | **88.9% faster** |
+| **Sample 3** | `29.20 ms` | `4.79 ms` | **83.6% faster** |
+| **Average Response Time** | **`35.60 ms`** | **`4.19 ms`** | **88.2% FASTER** |
+
+#### Key Analysis & Viva Questions
+
+1. **Why must the cache be invalidated on every write operation, and what would happen to data correctness if it were not?**
+   - If the cache is not invalidated on write (`POST`, `PUT`, `DELETE`), subsequent `GET` requests within the TTL window will return stale, outdated snapshots from memory rather than the updated database state, causing data inconsistency and phantom records.
+2. **What is a reasonable TTL (time-to-live) for cached data in a task management context, and what trade-off does TTL length represent?**
+   - A TTL of 30–60 seconds is typical for interactive task applications. A longer TTL reduces database read load but increases the risk of serving stale data if an external service writes to the database directly without invalidating the cache. A shorter TTL guarantees fresher data but causes more frequent database queries.
+3. **Why is in-memory caching (node-cache) not suitable for a multi-server/multi-instance deployment?**
+   - `node-cache` stores items in the RAM of a single Node.js process. In a clustered or multi-instance load-balanced deployment, writes handled by Server A will not invalidate the cache on Server B, causing users routed to different instances to see conflicting data. Distributed caching (e.g., Redis or Memcached) is required for multi-server setups.
+
+## Cache & Analytics Endpoints
+
+| Method | Route                | Auth Required | Description                                    |
+|--------|----------------------|---------------|------------------------------------------------|
+| GET    | /tasks/cache/stats   | Yes (Bearer)  | View cache hits, misses, hit rate, active keys |
+| POST   | /tasks/cache/flush   | Yes (Bearer)  | Manually invalidate all cached entries         |
+| POST   | /tasks/seed-dummy    | Yes (Bearer)  | Seed sample realistic tasks for testing        |
+
 ## GitHub Deliverables
 
 - Working MongoDB-backed CRUD API with Mongoose schema and validation
 - `.env` excluded via `.gitignore`; `.env.example` provided instead
 - CORS enabled for local frontend-backend integration (Practical 6)
+- JWT Authentication & Middleware pipeline (Practical 7)
+- In-memory caching with `node-cache` and empirical latency benchmarking (Practical 9)
 
 ## Author
 
