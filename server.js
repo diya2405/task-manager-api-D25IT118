@@ -20,6 +20,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.use(cors({
   origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  exposedHeaders: ['X-Cache'],
 }));
 app.use(express.json());
 app.use(requestLogger);
