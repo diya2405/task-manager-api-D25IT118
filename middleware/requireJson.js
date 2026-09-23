@@ -1,7 +1,8 @@
 function requireJson(req, res, next) {
   if (['POST', 'PUT'].includes(req.method)) {
-    if (!req.is('application/json')) {
-      return res.status(400).json({ error: "Content-Type must be application/json" });
+    const contentLength = req.headers['content-length'];
+    if (contentLength && contentLength !== '0' && !req.is('application/json')) {
+      return res.status(400).json({ error: 'Content-Type must be application/json' });
     }
   }
   next();
