@@ -96,6 +96,9 @@ task-manager-api-D25IT118/
 │   ├── validateTaskInput.js
 │   ├── notFound.js
 │   └── errorHandler.js
+├── events/
+│   ├── taskEvents.js
+│   └── taskListeners.js
 └── utils/
     └── cache.js
 ```
@@ -225,6 +228,44 @@ curl -X POST http://localhost:5000/tasks \
 | POST   | /tasks/cache/flush   | Yes (Bearer)  | Manually invalidate all cached entries         |
 | POST   | /tasks/seed-dummy    | Yes (Bearer)  | Seed sample realistic tasks for testing        |
 
+### Practical 10 — Asynchronous Processing with Event-Driven Architecture
+- Implemented background event-driven asynchronous processing using Node.js built-in `EventEmitter` (no external dependencies)
+- **Decoupled Request-Response Cycle**: Emits events (`task-created`, `task-deleted`) **after** returning HTTP response (`201 Created` / `200 OK`), ensuring side-effects never block API latency
+- **Background Worker Simulation**: Listeners simulate asynchronous operations (email notification dispatch with 1500ms delay, deletion audit log archiving with 1000ms delay)
+- **Safe Error Handling**: Registered dedicated `error` event listener preventing EventEmitter throws from crashing the process
+- **Event Audit Buffer**: Maintains an in-memory ring buffer of the last 50 events exposed via `GET /tasks/events/log`
+
+#### Empirical Timestamp Evidence (Console & Benchmark Output)
+
+```
+========================================================================================
+   EVENT TIMELINE EVIDENCE (TIMESTAMP COMPARISON)
+========================================================================================
+| Event Type     | Task Title                 | Received At (Listener)   | Completed At (Worker)    | Delay   | Status          |
+|----------------|----------------------------|--------------------------|--------------------------|---------|-----------------|
+| task-created   | Async Architecture Demo Ta | 2026-10-07T15:51:15.996Z | 2026-10-07T15:51:17.499Z | 1500ms  | PROCESSED_ASYNC |
+| task-deleted   | Async Architecture Demo Ta | 2026-10-07T15:51:18.065Z | 2026-10-07T15:51:19.080Z | 1000ms  | PROCESSED_ASYNC |
+========================================================================================
+```
+* **Client Response Time**: `55.79 ms` (Instant return)
+* **Background Worker Completion**: `+1503 ms` later (Non-blocking execution confirmed)
+
+#### Key Analysis & Viva Questions
+
+1. **Why does emitting an event not block the API response, even though both run on the same Node.js process?**
+   - Node.js operates on an event-driven, single-threaded Event Loop. When `taskEvents.emit()` triggers a listener that uses timers (`setTimeout`) or I/O callbacks, those tasks are offloaded to the libuv threadpool/timers phase. The current call stack finishes executing `res.json()`, and the HTTP response is dispatched immediately without waiting for background timers to resolve.
+2. **What would happen to API response time if the notification logic were placed directly inside the POST route?**
+   - If notification logic (e.g. SMTP email dispatch or slow third-party API calls taking 1500ms) were placed synchronously inside the route handler, the client would experience a latency increase from ~50ms to >1550ms. Users would perceive the application as laggy and slow.
+3. **Why is EventEmitter a reasonable choice for this scale of application, but not for a production system handling millions of events per day?**
+   - `EventEmitter` is process-local and in-memory. If the Node process restarts or crashes before an event listener completes, all in-flight events are permanently lost. It also cannot distribute tasks across multiple worker servers. Production systems at scale require persistent, distributed message brokers (such as RabbitMQ, Apache Kafka, or Redis BullMQ) that provide message durability, acknowledgment, automatic retries, and cluster-wide scaling.
+
+## Event Endpoints
+
+| Method | Route                | Auth Required | Description                                     |
+|--------|----------------------|---------------|-------------------------------------------------|
+| GET    | /tasks/events/log    | Yes (Bearer)  | View in-memory audit log of async events        |
+| POST   | /tasks/events/clear  | Yes (Bearer)  | Clear event audit log history                   |
+
 ## GitHub Deliverables
 
 - Working MongoDB-backed CRUD API with Mongoose schema and validation
@@ -232,6 +273,7 @@ curl -X POST http://localhost:5000/tasks \
 - CORS enabled for local frontend-backend integration (Practical 6)
 - JWT Authentication & Middleware pipeline (Practical 7)
 - In-memory caching with `node-cache` and empirical latency benchmarking (Practical 9)
+- Asynchronous processing with native `EventEmitter` and timestamp verification (Practical 10)
 
 ## Author
 

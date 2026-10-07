@@ -1,5 +1,6 @@
 const Task = require('../models/Task');
 const cacheUtil = require('../utils/cache');
+const { taskEvents, getEventLogs, clearEventLogs } = require('../events/taskEvents');
 
 // GET /tasks — Cached per user
 exports.getAllTasks = async (req, res, next) => {
@@ -45,7 +46,7 @@ exports.getTaskById = async (req, res, next) => {
   }
 };
 
-// POST /tasks — Invalidate cache on write
+// POST /tasks — Asynchronous Event Emission (Practical 10) + Invalidate Cache (Practical 9)
 exports.createTask = async (req, res, next) => {
   try {
     const task = await Task.create({
@@ -56,7 +57,13 @@ exports.createTask = async (req, res, next) => {
     // Invalidate user's tasks list cache
     cacheUtil.del(`tasks_${req.user.id}`);
 
+    // Practical 10: Log immediate API response timestamp and return response first
+    const responseTime = new Date().toISOString();
+    console.log(`[API Response] Task created (201) sent at ${responseTime} for "${task.title}"`);
     res.status(201).json(task);
+
+    // Emit asynchronous background event non-blockingly
+    taskEvents.emit('task-created', task);
   } catch (err) {
     next(err);
   }
@@ -86,7 +93,7 @@ exports.updateTask = async (req, res, next) => {
   }
 };
 
-// DELETE /tasks/:id — Invalidate cache on delete
+// DELETE /tasks/:id — Asynchronous Event Emission (Practical 10) + Invalidate Cache
 exports.deleteTask = async (req, res, next) => {
   try {
     const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.user.id });
@@ -96,7 +103,13 @@ exports.deleteTask = async (req, res, next) => {
     cacheUtil.del(`tasks_${req.user.id}`);
     cacheUtil.del(`task_${req.user.id}_${req.params.id}`);
 
+    // Practical 10: Log immediate API response timestamp and return response first
+    const responseTime = new Date().toISOString();
+    console.log(`[API Response] Task deleted (200) sent at ${responseTime} for "${task.title}"`);
     res.status(200).json({ message: 'Task deleted', task });
+
+    // Emit asynchronous background event non-blockingly
+    taskEvents.emit('task-deleted', task);
   } catch (err) {
     if (err.name === 'CastError') return res.status(404).json({ error: 'Task not found' });
     next(err);
@@ -141,4 +154,14 @@ exports.seedDummyTasks = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// Practical 10: Event Telemetry & Audit Log Endpoints
+exports.getEventLogsEndpoint = (req, res) => {
+  res.status(200).json(getEventLogs());
+};
+
+exports.clearEventLogsEndpoint = (req, res) => {
+  clearEventLogs();
+  res.status(200).json({ message: 'Event logs cleared', logs: [] });
 };

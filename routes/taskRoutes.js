@@ -10,16 +10,22 @@ const {
   getCacheStatsEndpoint,
   flushCacheEndpoint,
   seedDummyTasks,
+  getEventLogsEndpoint,
+  clearEventLogsEndpoint,
 } = require('../controllers/taskController');
 
 const auth = require('../middleware/auth');
 const validateTaskId = require('../middleware/validateTaskId');
 const validateTaskInput = require('../middleware/validateTaskInput');
 
-// Practical 9: Cache Debug & Analytics Endpoints (Defined before /:id param routes)
+// Practical 9: Cache Debug & Analytics Endpoints
 router.get('/cache/stats', auth, getCacheStatsEndpoint);
 router.post('/cache/flush', auth, flushCacheEndpoint);
 router.post('/seed-dummy', auth, seedDummyTasks);
+
+// Practical 10: Event Telemetry & Audit Log Endpoints
+router.get('/events/log', auth, getEventLogsEndpoint);
+router.post('/events/clear', auth, clearEventLogsEndpoint);
 
 // Task CRUD Endpoints
 router.get('/', auth, getAllTasks);
