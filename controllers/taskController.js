@@ -1,6 +1,6 @@
 const Task = require('../models/Task');
 const cacheUtil = require('../utils/cache');
-const { taskEvents, getEventLogs, clearEventLogs } = require('../events/taskEvents');
+const taskEvents = require('../events');
 
 // GET /tasks — Cached per user
 exports.getAllTasks = async (req, res, next) => {
@@ -57,9 +57,9 @@ exports.createTask = async (req, res, next) => {
     // Invalidate user's tasks list cache
     cacheUtil.del(`tasks_${req.user.id}`);
 
-    // Practical 10: Log immediate API response timestamp and return response first
+    // Practical 10 (Step 3): Log response timestamp and respond immediately
     const responseTime = new Date().toISOString();
-    console.log(`[API Response] Task created (201) sent at ${responseTime} for "${task.title}"`);
+    console.log(`[API] Response sent at ${responseTime}`);
     res.status(201).json(task);
 
     // Emit asynchronous background event non-blockingly
@@ -105,7 +105,7 @@ exports.deleteTask = async (req, res, next) => {
 
     // Practical 10: Log immediate API response timestamp and return response first
     const responseTime = new Date().toISOString();
-    console.log(`[API Response] Task deleted (200) sent at ${responseTime} for "${task.title}"`);
+    console.log(`[API] Response sent at ${responseTime} (Task deleted)`);
     res.status(200).json({ message: 'Task deleted', task });
 
     // Emit asynchronous background event non-blockingly
@@ -158,10 +158,11 @@ exports.seedDummyTasks = async (req, res, next) => {
 
 // Practical 10: Event Telemetry & Audit Log Endpoints
 exports.getEventLogsEndpoint = (req, res) => {
-  res.status(200).json(getEventLogs());
+  const logs = taskEvents.getEventLogs ? taskEvents.getEventLogs() : [];
+  res.status(200).json({ logs, count: logs.length });
 };
 
 exports.clearEventLogsEndpoint = (req, res) => {
-  clearEventLogs();
+  if (taskEvents.clearEventLogs) taskEvents.clearEventLogs();
   res.status(200).json({ message: 'Event logs cleared', logs: [] });
 };

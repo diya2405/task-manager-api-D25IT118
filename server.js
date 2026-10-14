@@ -9,7 +9,7 @@ const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 const taskRoutes = require('./routes/taskRoutes');
 const authRoutes = require('./routes/authRoutes');
-require('./events/taskListeners');
+require('./listeners');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
