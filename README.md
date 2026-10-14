@@ -96,9 +96,8 @@ task-manager-api-D25IT118/
 │   ├── validateTaskInput.js
 │   ├── notFound.js
 │   └── errorHandler.js
-├── events/
-│   ├── taskEvents.js
-│   └── taskListeners.js
+├── events.js
+├── listeners.js
 └── utils/
     └── cache.js
 ```
@@ -259,12 +258,6 @@ curl -X POST http://localhost:5000/tasks \
 3. **Why is EventEmitter a reasonable choice for this scale of application, but not for a production system handling millions of events per day?**
    - `EventEmitter` is process-local and in-memory. If the Node process restarts or crashes before an event listener completes, all in-flight events are permanently lost. It also cannot distribute tasks across multiple worker servers. Production systems at scale require persistent, distributed message brokers (such as RabbitMQ, Apache Kafka, or Redis BullMQ) that provide message durability, acknowledgment, automatic retries, and cluster-wide scaling.
 
-## Event Endpoints
-
-| Method | Route                | Auth Required | Description                                     |
-|--------|----------------------|---------------|-------------------------------------------------|
-| GET    | /tasks/events/log    | Yes (Bearer)  | View in-memory audit log of async events        |
-| POST   | /tasks/events/clear  | Yes (Bearer)  | Clear event audit log history                   |
 
 ## GitHub Deliverables
 

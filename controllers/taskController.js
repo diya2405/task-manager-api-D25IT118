@@ -155,14 +155,3 @@ exports.seedDummyTasks = async (req, res, next) => {
     next(err);
   }
 };
-
-// Practical 10: Event Telemetry & Audit Log Endpoints
-exports.getEventLogsEndpoint = (req, res) => {
-  const logs = taskEvents.getEventLogs ? taskEvents.getEventLogs() : [];
-  res.status(200).json({ logs, count: logs.length });
-};
-
-exports.clearEventLogsEndpoint = (req, res) => {
-  if (taskEvents.clearEventLogs) taskEvents.clearEventLogs();
-  res.status(200).json({ message: 'Event logs cleared', logs: [] });
-};
