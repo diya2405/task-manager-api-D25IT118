@@ -1,6 +1,42 @@
 const taskEvents = require('./events');
 
-// Step 2 & 5: Listener for 'task-created' event with 2-second delay
+// ==========================================
+// Practical 10: Event Desk Registration Listener
+// ==========================================
+taskEvents.on('event-desk-entry', (entry) => {
+  const receivedAt = new Date().toISOString();
+  console.log(`[Event Desk] Entry received for "${entry.name}" (${entry.event}, ${entry.seats} seat(s)) at ${receivedAt}`);
+  console.log(`[Event Desk Worker] Background processing seat confirmation for ${entry.email}...`);
+
+  // Asynchronous background worker (2.0s delay simulating background booking & notification)
+  setTimeout(() => {
+    const confirmedAt = new Date().toISOString();
+    const ticketCode = 'EVT-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    entry.status = 'confirmed';
+    entry.ticketCode = ticketCode;
+    entry.confirmedAt = confirmedAt;
+
+    console.log(
+      `[Event Desk Worker] Background confirmation complete: "${entry.name}" -> ${ticketCode} at ${confirmedAt}`
+    );
+
+    taskEvents.logEvent({
+      event: 'event-desk-confirmed',
+      taskTitle: `${entry.name} - ${entry.event} (${ticketCode})`,
+      taskId: entry.id,
+      receivedAt,
+      completedAt: confirmedAt,
+      delayMs: 2000,
+      status: 'COMPLETED',
+      details: `Confirmed ticket ${ticketCode} for ${entry.name}`,
+    });
+  }, 2000);
+});
+
+// ==========================================
+// Step 2 & 5: Listener for 'task-created' event
+// ==========================================
 taskEvents.on('task-created', (task) => {
   const receivedAt = new Date().toISOString();
   console.log(`[Notification] Task "${task.title}" created at ${receivedAt}`);
@@ -24,7 +60,9 @@ taskEvents.on('task-created', (task) => {
   }, 2000);
 });
 
-// Supplementary Problem 1: Second event 'task-deleted' with its own listener
+// ==========================================
+// Supplementary Problem 1: Second event 'task-deleted'
+// ==========================================
 taskEvents.on('task-deleted', (task) => {
   const receivedAt = new Date().toISOString();
   console.log(`[Notification] Task "${task.title || task._id}" deleted at ${receivedAt}`);
@@ -48,7 +86,9 @@ taskEvents.on('task-deleted', (task) => {
   }, 1000);
 });
 
-// Supplementary Problem 2: Error event listener catching unhandled errors
+// ==========================================
+// Supplementary Problem 2: Error event listener
+// ==========================================
 taskEvents.on('error', (err) => {
   console.error(`[Event Error] Unhandled EventEmitter error captured: ${err.message}`);
   taskEvents.logEvent({
@@ -58,6 +98,6 @@ taskEvents.on('error', (err) => {
   });
 });
 
-console.log('✅ Task EventEmitter listeners registered successfully.');
+console.log('✅ Task & Event Desk EventEmitter listeners registered successfully.');
 
 module.exports = taskEvents;

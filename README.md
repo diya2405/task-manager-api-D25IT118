@@ -87,7 +87,8 @@ task-manager-api-D25IT118/
 │   └── authController.js
 ├── routes/
 │   ├── taskRoutes.js
-│   └── authRoutes.js
+│   ├── authRoutes.js
+│   └── eventRoutes.js
 ├── middleware/
 │   ├── auth.js
 │   ├── logger.js
@@ -258,6 +259,16 @@ curl -X POST http://localhost:5000/tasks \
 3. **Why is EventEmitter a reasonable choice for this scale of application, but not for a production system handling millions of events per day?**
    - `EventEmitter` is process-local and in-memory. If the Node process restarts or crashes before an event listener completes, all in-flight events are permanently lost. It also cannot distribute tasks across multiple worker servers. Production systems at scale require persistent, distributed message brokers (such as RabbitMQ, Apache Kafka, or Redis BullMQ) that provide message durability, acknowledgment, automatic retries, and cluster-wide scaling.
 
+
+### Practical 10 Endpoints (Event Desk & Audit)
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/events/register` | Accepts registration entry, immediately responds with 201 Created, and emits background `event-desk-entry` event |
+| `GET` | `/events/pipeline` | Returns current live pipeline states: `waiting`, `processing`, `confirmed` |
+| `POST` | `/events/reset` | Clears/resets live pipeline entries |
+| `GET` | `/events/log` | Returns in-memory audit log of emitted background events |
+| `POST` | `/events/clear` | Clears audit logs buffer |
 
 ## GitHub Deliverables
 

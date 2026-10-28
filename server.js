@@ -9,6 +9,7 @@ const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 const taskRoutes = require('./routes/taskRoutes');
 const authRoutes = require('./routes/authRoutes');
+const eventRoutes = require('./routes/eventRoutes');
 require('./listeners');
 
 const app = express();
@@ -29,6 +30,7 @@ app.use(requireJson);
 
 app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
+app.use('/events', eventRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
