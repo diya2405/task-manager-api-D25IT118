@@ -10,6 +10,7 @@ const errorHandler = require('./middleware/errorHandler');
 const taskRoutes = require('./routes/taskRoutes');
 const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 require('./listeners');
 
 const app = express();
@@ -44,6 +45,8 @@ app.get('/health', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/events', eventRoutes);
+app.use('/ai', aiRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

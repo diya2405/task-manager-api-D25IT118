@@ -48,4 +48,14 @@ describe('Practical 12: Automated API Test Suite - Diya Shah (D25IT118)', () => 
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toBeDefined();
   });
+
+  it('6. POST /api/ai/generate-description should return AI description with graceful degradation', async () => {
+    const res = await request(app)
+      .post('/api/ai/generate-description')
+      .send({ title: 'Fix authentication token expiration bug' });
+    expect(res.statusCode).toBe(200);
+    expect(typeof res.body.description).toBe('string');
+    expect(res.body.priority).toBeDefined();
+    expect(res.body.disclaimer).toBeDefined();
+  });
 });
