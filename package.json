@@ -1,13 +1,15 @@
 {
   "name": "task-manager-api-d25it118",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Task Manager & Event Desk API - Automated Testing & CI/CD Pipeline (Practical 12)",
+  "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "lint": "eslint .",
+    "test": "jest --runInBand --detectOpenHandles --forceExit"
   },
   "keywords": [],
-  "author": "",
+  "author": "Diya Shah (D25IT118)",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -18,5 +20,10 @@
     "mongoose": "^9.9.1",
     "node-cache": "^5.1.2",
     "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^10.14.0",
+    "jest": "^30.5.2",
+    "supertest": "^7.3.1"
   }
 }
