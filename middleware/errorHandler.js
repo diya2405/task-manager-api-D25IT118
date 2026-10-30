@@ -1,4 +1,4 @@
-module.exports = function errorHandler(err, req, res, next) {
+module.exports = function errorHandler(err, req, res, _next) {
   console.error(err.stack);
   if (err.name === 'ValidationError') {
     const errors = Object.values(err.errors).map((e) => e.message);
