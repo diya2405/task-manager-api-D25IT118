@@ -1,8 +1,6 @@
 # Practical 11: Multi-Container Orchestration with Docker Compose
 # Student: Diya Shah (D25IT118) - CHARUSAT ITUE301
 
-version: '3.8'
-
 services:
   # 1. Official MongoDB Service
   mongodb:

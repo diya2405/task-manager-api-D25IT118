@@ -1,5 +1,5 @@
 # Practical 11: Containerization with Docker - Diya Shah (D25IT118)
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
