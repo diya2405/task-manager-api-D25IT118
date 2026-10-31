@@ -1,0 +1,62 @@
+# Practical 11: Multi-Container Orchestration with Docker Compose
+# Student: Diya Shah (D25IT118) - CHARUSAT ITUE301
+
+version: '3.8'
+
+services:
+  # 1. Official MongoDB Service
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-d25it118
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      # Supplementary Problem: Named volume for MongoDB data persistence across restarts
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  # 2. Node/Express Backend Service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-d25it118
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/taskmanager
+      - CLIENT_ORIGIN=http://localhost:5173
+      - JWT_SECRET=d25it118_super_secret_jwt_key_practical7_2026
+      - JWT_EXPIRES_IN=1h
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  # 3. React Frontend Service
+  frontend:
+    build:
+      context: ../../Portfolio-D25IT118
+      dockerfile: Dockerfile
+    container_name: frontend-d25it118
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  # Named volume for database persistence
+  mongo-data:
+    driver: local
+
+networks:
+  # Bridge network for isolated inter-container communication
+  app-network:
+    driver: bridge
